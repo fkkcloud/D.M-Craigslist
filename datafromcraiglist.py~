@@ -11,7 +11,6 @@ import pprint
 import operator
 from bs4 import BeautifulSoup as bs
 from math import sqrt
-import dgram  # dendrogram lib
 
 # Get datas from url ------------------------------------------
 def getDataFromUrl( url ):
@@ -83,11 +82,7 @@ def getSubjectPerCity( category ):
         # page index
         for page in ["","100","200"]:
             url = "http://"+cities[i]+".craigslist.org/search/"+category+"/"+page+"index.html"
-            # just in case there is no next page!
-            try:
-                soupObj = getDataFromUrl( url )
-            except:
-                break
+            soupObj = getDataFromUrl( url )
             subjectList.append(getEntriesFromSoupObj( soupObj ))
             tmp = subjectList[i]
             for j in tmp:
@@ -153,101 +148,31 @@ def sim_pearson( m1, m2 ):
 
 # bicluster class ------------------------------------------------
 class bicluster:
-    def __init__(self, map, left=None, right=None, distance=0.0, id=None):
-        self.left = left
-        self.right = right
-        self.map = map
-        self.id = id
-        self.distance = distance
+    def __init__(self, vec, left=None, right=None, distance=0.0, id=None):
+        self.left=left
+        self.right=right
+        self.vec=vec
+        self.id=id
+        self.distance=distance
 
-# generating hirarchical cluster ---------------------------------
-def hcluster( datas ):
-    distances = {}
-    currentclustid = -1
+# generating cluster
+def hcluster(
 
-    clust = []
-    i = 0
-    for city in datas.keys():
-        clust.append(bicluster(datas[city], id = i))
-        i += 1
-    
-    while len(clust) > 1:
-        lowestpair = (0,1)
-        closest = sim_pearson(clust[0].map, clust[1].map)
 
-        for i in range(len(clust)):
-            for j in range(i+1, len(clust)):
-                if (clust[i].id, clust[j].id) not in distances:
-                    distances[(clust[i].id, clust[j].id)] = sim_pearson(clust[i].map, clust[j].map)
 
-                d = distances[(clust[i].id, clust[j].id)]
 
-                if d < closest:
-                    closest = d
-                    lowestpair = (i,j)
-        
-        ci = []
-        for key in clust[lowestpair[0]].map.keys():
-            if key in clust[lowestpair[1]].map.keys():
-                ci.append(key)
 
-        mergemap = {}
-        for keyname in ci:
-            mergemap[keyname] = (clust[lowestpair[0]].map[keyname] + clust[lowestpair[1]].map[keyname])/2.0
-
-        newcluster = bicluster(mergemap, left = clust[lowestpair[0]], right = clust[lowestpair[1]], distance = closest, id = currentclustid)
-
-        currentclustid -= 1
-        del clust[lowestpair[1]]
-        del clust[lowestpair[0]]
-        clust.append(newcluster)
-    return clust[0]
-
-# Getting Earth's Cities
-def getEarthCities(end):
-    earth = []
-    soupObj = getDataFromUrl("http://www.craigslist.org/about/sites#US")
-    links = soupObj('a')
-    for link in links[0:end]:
-        try:
-            ctlink = link['href']
-            seq1 = ctlink.split('//')
-        except:
-            continue
-        if seq1[0] == 'http:':
-            earth.append(seq1[1].split('.')[0])
-    return earth
-        
-# Hirarchical Print ----------------------------------------------------
-def printclust(clust, labels=None, n=0):
-    for i in range(n):
-        print ' ',
-    if clust.id < 0:
-        print '-'
-    else:
-        if labels == None:
-            print clust.id
-        else:
-            print labels[clust.id]
-    if clust.left != None:
-        printclust(clust.left, labels=labels, n=n+1)
-    if clust.right != None:
-        printclust(clust.right, labels=labels, n=n+1)
 
 # Run Application ----------------------------------------------------------
 def main():
     global cities
-#    cities = ['lasvegas', 'losangeles', 'sfbay', 'seoul', 'tokyo','london']    
-    cities = getEarthCities(40)
+    cities = ['lasvegas', 'losangeles', 'sfbay', 'seoul', 'tokyo','london']    
     subjects = getSubjectPerCity( 'jjj' ) # jjj is jobs
-    datas = sortData( subjects, 1 ) # type 0 for acending, 1 for normalized
+    result = sortData( subjects, 1 ) # type 0 for acending, 1 for normalized
 
-    hclust = hcluster( datas )
-    dgram.drawdendrogram(hclust, cities, jpeg = 'craigslist.jpg')
-#    printclust( hclust , cities)
-#    pprint.pprint( datas )
-#    print sim_pearson(datas['losangeles'], datas['tokyo'])
-#    print sim_pearson(datas['seoul'], datas['tokyo'])
+    pprint.pprint( result )
+    print sim_pearson(result['losangeles'], result['tokyo'])
+    print sim_pearson(result['seoul'], result['tokyo'])
 
 if __name__ == "__main__":
     main()
