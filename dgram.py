@@ -8,7 +8,6 @@ def getheight(clust):
     # Otherwise the height is the same of the heights of
     # each bramnch
     result = getheight(clust.left) + getheight(clust.right)
-    print result
     return result
 
 def getdepth(clust):
@@ -41,7 +40,6 @@ def drawdendrogram(clust, labels, jpeg = 'clusters.jpg'):
 
 def drawnode(draw, clust, x, y, scaling, labels):
     if clust.id < 0:
-        print 'node',clust.id
         h1 = getheight(clust.left) * 20
         h2 = getheight(clust.right) * 20
         top = y - (h1 + h2) / 2
@@ -50,7 +48,7 @@ def drawnode(draw, clust, x, y, scaling, labels):
         ll = clust.distance * scaling
         # Vertical line from this cluster to children
         draw.line((x, top + h1/2, x, bottom - h2/2), fill = (255, 0, 0))
-        
+        draw.text((x+5, (top + bottom)/2.0-7), str(clust.com), (0, 60, 40))
         # Horizontal line to left item
         draw.line((x, top + h1/2, x + ll, top + h1/2), fill = (255, 0, 0))
 
@@ -58,9 +56,9 @@ def drawnode(draw, clust, x, y, scaling, labels):
         draw.line((x, bottom - h2/2, x + ll, bottom - h2/2), fill = (255, 0, 0))
         drawnode(draw, clust.left, x+ll, top+h1/2, scaling, labels)
         drawnode(draw, clust.right, x+ll, bottom-h2/2, scaling, labels)
+
     else:
         # If this is an endpoint, draw the item label
-        print labels[clust.id]
         draw.text((x+5, y-7), labels[clust.id], (0,0,0))
 
 

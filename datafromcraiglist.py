@@ -28,7 +28,8 @@ def get2LettersFromEntry( entry ):
                   'per','now','hiring','included',\
                   'wanted','and','you','hr','hrs','rate','to','up','are',\
                   'at','some','our','in','want','et cetera','around','your',\
-                  'year old', 'yrs old', 'from','needed','need']:
+                  'year old', 'yrs old', 'from','needed','need','am','pm',\
+                  'time']:
         try:
             listSingleWords.remove(d)
         except:
@@ -81,7 +82,7 @@ def getSubjectPerCity( category ):
     subjectList = []
     for i in range(len(cities)):
         # page index
-        for page in ["","100","200"]:
+        for page in ["","100","200"]: #["","100"] to do more pages
             url = "http://"+cities[i]+".craigslist.org/search/"+category+"/"+page+"index.html"
             # just in case there is no next page!
             try:
@@ -110,13 +111,10 @@ def sortData( subjects, type ):
         if type == 0:
             continue
 
-        ls = []
-        for item in sortedDataPerCity[k]:
-            if not ( item[1] in ls):
-                ls.append(item[1])
-        maxval = max(ls)
+        maxval = len(sortedDataPerCity[k])
         val = {}                            
         for item in sortedDataPerCity[k]:
+            # algorithm key
             val[item[0]] = float(item[1])/maxval
         evaled[cities[k]] = val
     
@@ -149,16 +147,23 @@ def sim_pearson( m1, m2 ):
     if den==0:
         return 0
     r=num/den
-    return r
+    
+    return remap(r, -1.0, 1.0, 0.0, 1.0)
+
+# remapping func -------------------------------------------------
+def remap( val, oldmin, oldmax, newmin, newmax ):
+    return (((val - oldmin) * (newmax - newmin)) / (oldmax - oldmin)) + newmin
 
 # bicluster class ------------------------------------------------
 class bicluster:
-    def __init__(self, map, left=None, right=None, distance=0.0, id=None):
+    def __init__(self, map, left=None, right=None, distance=0.0, id=None, location=None, com=0):
         self.left = left
         self.right = right
         self.map = map
         self.id = id
         self.distance = distance
+        self.city = location
+        self.com = com
 
 # generating hirarchical cluster ---------------------------------
 def hcluster( datas ):
@@ -168,9 +173,9 @@ def hcluster( datas ):
     clust = []
     i = 0
     for city in datas.keys():
-        clust.append(bicluster(datas[city], id = i))
+        clust.append(bicluster(datas[city], id = i, location = city))
         i += 1
-    
+
     while len(clust) > 1:
         lowestpair = (0,1)
         closest = sim_pearson(clust[0].map, clust[1].map)
@@ -195,7 +200,11 @@ def hcluster( datas ):
         for keyname in ci:
             mergemap[keyname] = (clust[lowestpair[0]].map[keyname] + clust[lowestpair[1]].map[keyname])/2.0
 
-        newcluster = bicluster(mergemap, left = clust[lowestpair[0]], right = clust[lowestpair[1]], distance = closest, id = currentclustid)
+        # algorithm key
+        # common count dividegetting a city's total count and
+        bal = float(len(ci)) / len(datas[datas.keys()[0]]) 
+
+        newcluster = bicluster(mergemap, left = clust[lowestpair[0]], right = clust[lowestpair[1]], distance = closest * bal , id = currentclustid, com = len(ci))
 
         currentclustid -= 1
         del clust[lowestpair[1]]
@@ -223,7 +232,7 @@ def printclust(clust, labels=None, n=0):
     for i in range(n):
         print ' ',
     if clust.id < 0:
-        print '-'
+        print '-', clust.distance, clust.com
     else:
         if labels == None:
             print clust.id
@@ -237,14 +246,19 @@ def printclust(clust, labels=None, n=0):
 # Run Application ----------------------------------------------------------
 def main():
     global cities
-#    cities = ['lasvegas', 'losangeles', 'sfbay', 'seoul', 'tokyo','london']    
-    cities = getEarthCities(40)
+    cities = ['lasvegas', 'losangeles', 'sfbay', 'seoul', 'tokyo',\
+                  'london', 'newyork', 'portland', 'beijing', 'shanghai']
+#    cities = getEarthCities(20)
+    
     subjects = getSubjectPerCity( 'jjj' ) # jjj is jobs
     datas = sortData( subjects, 1 ) # type 0 for acending, 1 for normalized
-
+    pprint.pprint( datas )
     hclust = hcluster( datas )
-    dgram.drawdendrogram(hclust, cities, jpeg = 'craigslist.jpg')
-#    printclust( hclust , cities)
+
+    printclust( hclust , datas.keys() )
+
+    dgram.drawdendrogram(hclust, datas.keys(), jpeg = 'craigslist.jpg')
+
 #    pprint.pprint( datas )
 #    print sim_pearson(datas['losangeles'], datas['tokyo'])
 #    print sim_pearson(datas['seoul'], datas['tokyo'])

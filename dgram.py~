@@ -56,16 +56,11 @@ def drawnode(draw, clust, x, y, scaling, labels):
 
         # Horizontal line to right item
         draw.line((x, bottom - h2/2, x + ll, bottom - h2/2), fill = (255, 0, 0))
-        # draw.text((x,y), str(clust.id) , (0,200,0))
-        draw.text((x,y-10), str(h1/2)+','+str(h2/2), (140,140,0))
-        draw.text((x,y), str(y)+','+str(top + h1/2)+','+str(bottom - h2/2), (140,0,140))
-        draw.text((x,y+10), str((clust.distance)*scaling), (0,140,140))
-        # Call the function to draw the left and right nodes
         drawnode(draw, clust.left, x+ll, top+h1/2, scaling, labels)
         drawnode(draw, clust.right, x+ll, bottom-h2/2, scaling, labels)
     else:
         # If this is an endpoint, draw the item label
         print labels[clust.id]
         draw.text((x+5, y-7), labels[clust.id], (0,0,0))
-        # draw.text((x+5, y+3), str(clust.id), (140,0,140))
+
 
