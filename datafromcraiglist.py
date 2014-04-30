@@ -12,6 +12,8 @@ import operator
 from bs4 import BeautifulSoup as bs
 from math import sqrt
 import dgram  # dendrogram lib
+import random
+from PIL import *
 
 # Get datas from url ------------------------------------------
 def getDataFromUrl( url ):
@@ -226,6 +228,73 @@ def getEarthCities(end):
         if seq1[0] == 'http:':
             earth.append(seq1[1].split('.')[0])
     return earth
+
+# 2D dimensional graph
+def mdgraph(data, rate=0.01):
+    n = len(data)
+
+    # The real distances between every pair of items
+    realdist = [[sim_pearson(data[keyname1],data[keyname2]) for keyname1 in data.keys()] for keyname2 in data.keys()]
+
+    outersum = 0.0
+
+    # Randomly initialize the starting points of the locations in 2D
+    loc = [[random.random(), random.random()] for i in range(n)]
+    fakedist = [[0.0 for j in range(n)] for i in range(n)]
+
+    lasterror = None
+    for m in range(0, 1000):
+        # Find projected distances
+        for i in range(n):
+            for j in range(n):
+                fakedist[i][j] = sqrt(sum([pow(loc[i][x]-loc[j][x],2) for x in range(len(loc[i]))]))
+
+    # Move points
+    grad = [[0.0, 0.0] for i in range(n)]
+    
+    totalerror = 0
+    for k in range(n):
+        for j in range(n):
+            if j == k: continue
+            # The error is percent difference between distances
+            try:
+                # make sure realdist dataset does not have 0.0
+                # which is completely same
+                errorterm=(fakedist[j][k]-realdist[j][k])/realdist[j][k]
+            except:
+                errorterm=0
+
+            # Each point needs to be moved away from or towards the other
+            # point in proportion to how much error it has
+            grad[k][0]+=((loc[k][0]-loc[j][0])/fakedist[j][k])*errorterm
+            grad[k][1]+=((loc[j][1]-loc[j][1])/fakedist[j][k])*errorterm
+
+            # Keep track of the total error
+            totalerror+=abs(errorterm)
+        print totalerror
+
+        # If the answer got worse by moving the points, we are done
+        if lasterror and lasterror < totalerror:
+            break
+        lasterror = totalerror
+
+        # Move each of the points by the learning rate times the gradient
+        for k in range(n):
+            loc[k][0] -= rate*grad[k][0]
+            loc[k][1] -= rate*grad[k][1]
+
+    return loc
+
+# drawing 2d graph
+def draw2d(data, labels, jpeg='mds2d.jpg'):
+    img = Image.new('RGB', (1000,1000), (255,255,255))
+    draw = ImageDraw.Draw(img)
+    for i in range(len(data)):
+        x = (data[i][0] + 0.5) * 600
+        y = (data[i][1] + 0.5) * 600
+        draw.text((x,y), labels[i], (0,0,0))
+    img.save(jpeg,'JPEG')
+
         
 # Hirarchical Print ----------------------------------------------------
 def printclust(clust, labels=None, n=0):
@@ -246,19 +315,21 @@ def printclust(clust, labels=None, n=0):
 # Run Application ----------------------------------------------------------
 def main():
     global cities
-    cities = ['lasvegas', 'losangeles', 'sfbay', 'seoul', 'tokyo',\
-                  'london', 'newyork', 'portland', 'beijing', 'shanghai']
+    cities = ['lasvegas', 'losangeles', 'sfbay', 'beijing','seoul', 'tokyo',\
+                  'london', 'newyork', 'seattle', 'washingtondc', 'chicago',\
+                  'sandiego','atlanta','boston','orangecounty','dallas']
 #    cities = getEarthCities(20)
     
     subjects = getSubjectPerCity( 'jjj' ) # jjj is jobs
     datas = sortData( subjects, 1 ) # type 0 for acending, 1 for normalized
-    pprint.pprint( datas )
-    hclust = hcluster( datas )
+#    pprint.pprint( datas )
+#    hclust = hcluster( datas )
 
-    printclust( hclust , datas.keys() )
+#    printclust( hclust , datas.keys() )
 
-    dgram.drawdendrogram(hclust, datas.keys(), jpeg = 'craigslist.jpg')
-
+#    dgram.drawdendrogram(hclust, datas.keys(), jpeg = 'craigslist.jpg')
+    coords = mdgraph( datas )
+    draw2d(coords, datas.keys(), jpeg='craigslist2d.jpg')
 #    pprint.pprint( datas )
 #    print sim_pearson(datas['losangeles'], datas['tokyo'])
 #    print sim_pearson(datas['seoul'], datas['tokyo'])
