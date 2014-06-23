@@ -3,6 +3,8 @@ D.M-Craigslist
 
 Data Mining with Craiglist
 
+https://sites.google.com/site/semanticdatas/data-interactive-art/playing-with-craigslist
+
 Craigslist has a huge amount of data in different subjects.
 Not just subjects for sales but jobs, personals, discussion forums and more.
 I believe this  enormous amount of information is more powerful than general sale system such as Ebay or Amazon.
