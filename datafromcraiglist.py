@@ -17,6 +17,7 @@ from PIL import *
 
 # Get datas from url ------------------------------------------
 def getDataFromUrl( url ):
+    
     loadedUrl = urllib2.urlopen( url )
     dataBuf = loadedUrl.read()
     soupObj = bs( dataBuf )
@@ -24,8 +25,10 @@ def getDataFromUrl( url ):
 
 # Get 2 Letters Algorithm --------------------------------------
 def get2LettersFromEntry( entry ):
+    
     entry = re.compile('[^a-z^A-Z]+').sub(' ',entry)
     listSingleWords = re.compile(' ').split( entry.strip().lower() )
+    
     for d in ['for','a','of','get','the','with',\
                   'per','now','hiring','included',\
                   'wanted','and','you','hr','hrs','rate','to','up','are',\
@@ -36,20 +39,24 @@ def get2LettersFromEntry( entry ):
             listSingleWords.remove(d)
         except:
             continue
+        
     for l in listSingleWords:
         if len(l) == 1:
             listSingleWords.remove(l)
 
     listTwoWords = []
+    
     for i in range(len(listSingleWords)-1):
         listTwoWords.append( listSingleWords[i]+' '+listSingleWords[i+1] )
     return listTwoWords
 
 # Getting list of words from Soup Object -------------------------
 def getEntriesFromSoupObj( soupObj ):
+    
     links = soupObj( 'a' )
     listOfWordList = []
     sentinel = 0
+    
     for i in range(len(links)):
         # print "Looking into link #%d" % i
         try:
@@ -69,12 +76,15 @@ def getEntriesFromSoupObj( soupObj ):
         except:
             # print "link #%d was not sucessful."
             continue
+        
     return listOfWordList
 
 # Getting subject per city (using 2 letters) -------------------------------
-def getSubjectPerCity( category ):    
+def getSubjectPerCity( category ):
+    
     subjectPerCities = []
     subjectCountPerCities = []
+    
     for i in range(len(cities)):
         tmpLs = []
         tmpDic = {}
@@ -104,6 +114,7 @@ def getSubjectPerCity( category ):
 
 # Sort Subjects (2 types available) ---------------------------------------
 def sortData( subjects, type ):
+    
     sortedDataPerCity = []
     evaled = {}
 
@@ -127,6 +138,7 @@ def sortData( subjects, type ):
 
 # Pearson Correlation ------------------------------------------------
 def sim_pearson( m1, m2 ):
+    
     si = []
     # find common job names
     for key in m1.keys():
@@ -216,9 +228,11 @@ def hcluster( datas ):
 
 # Getting Earth's Cities
 def getEarthCities(end):
+    
     earth = []
     soupObj = getDataFromUrl("http://www.craigslist.org/about/sites#US")
     links = soupObj('a')
+    
     for link in links[0:end]:
         try:
             ctlink = link['href']
@@ -227,10 +241,12 @@ def getEarthCities(end):
             continue
         if seq1[0] == 'http:':
             earth.append(seq1[1].split('.')[0])
+            
     return earth
 
 # 2D dimensional graph
 def mdgraph(data, rate=0.01):
+    
     n = len(data)
 
     # The real distances between every pair of items
@@ -287,6 +303,7 @@ def mdgraph(data, rate=0.01):
 
 # drawing 2d graph
 def draw2d(data, labels, jpeg='mds2d.jpg'):
+    
     img = Image.new('RGB', (1000,1000), (255,255,255))
     draw = ImageDraw.Draw(img)
     for i in range(len(data)):
@@ -298,6 +315,7 @@ def draw2d(data, labels, jpeg='mds2d.jpg'):
         
 # Hirarchical Print ----------------------------------------------------
 def printclust(clust, labels=None, n=0):
+    
     for i in range(n):
         print ' ',
     if clust.id < 0:
@@ -314,6 +332,7 @@ def printclust(clust, labels=None, n=0):
 
 # Run Application ----------------------------------------------------------
 def main():
+    
     global cities
     cities = ['lasvegas', 'losangeles', 'sfbay', 'beijing','seoul', 'tokyo',\
                   'london', 'newyork', 'seattle', 'washingtondc', 'chicago',\
